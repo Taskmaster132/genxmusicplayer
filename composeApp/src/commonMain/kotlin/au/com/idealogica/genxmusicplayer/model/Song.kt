@@ -1,5 +1,8 @@
 package au.com.idealogica.genxmusicplayer.model
 
+import kotlinx.serialization.Serializable
+
+@Serializable
 data class Song(
 	val id: Long,
 	val name: String,

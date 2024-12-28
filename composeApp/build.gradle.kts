@@ -1,12 +1,14 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
 plugins {
 	alias(libs.plugins.kotlinMultiplatform)
 	alias(libs.plugins.androidApplication)
 	alias(libs.plugins.composeMultiplatform)
 	alias(libs.plugins.composeCompiler)
+	alias(libs.plugins.kotlinSerialization)
+	alias(libs.plugins.ksp)
 }
 
 kotlin {
@@ -36,6 +38,17 @@ kotlin {
 			implementation(libs.androidx.compose.material3)
 			implementation(libs.androidx.compose.icons.core)
 			implementation(libs.androidx.compose.icons.extended)
+			implementation(libs.androidx.documentfile)
+			implementation(libs.androidx.media)
+			implementation(libs.androidx.media3.common)
+			implementation(libs.androidx.media3.exoplayer)
+			implementation(libs.androidx.media3.session)
+			implementation(libs.androidx.media3.ui)
+			implementation(libs.koin.android)
+			implementation(libs.koin.compose.viewmodel)
+			implementation(libs.koin.compose.viewmodel.navigation)
+			implementation(libs.koin.androidx.compose)
+			implementation(libs.koin.androidx.compose.navigation)
 		}
 		commonMain.dependencies {
 			implementation(compose.runtime)
@@ -46,7 +59,14 @@ kotlin {
 			implementation(compose.components.uiToolingPreview)
 			implementation(libs.androidx.lifecycle.viewmodel)
 			implementation(libs.androidx.lifecycle.runtime.compose)
+			implementation(libs.jetbrains.serialization.json)
+			api(libs.koin.annotations)
+			implementation(libs.koin.core)
 		}
+	}
+
+	sourceSets.named("commonMain").configure {
+		kotlin.srcDir("build/generated/ksp/metadata/commonMain/kotlin")
 	}
 }
 
@@ -59,7 +79,7 @@ android {
 		minSdk = libs.versions.android.minSdk.get().toInt()
 		targetSdk = libs.versions.android.targetSdk.get().toInt()
 		versionCode = 1
-		versionName = "1.0"
+		versionName = "0.1.0"
 	}
 	packaging {
 		resources {
@@ -78,8 +98,17 @@ android {
 }
 
 dependencies {
-	implementation(libs.androidx.documentfile)
-	implementation(libs.androidx.media3.exoplayer)
 	debugImplementation(compose.uiTooling)
+	add("kspCommonMainMetadata", libs.koin.ksp.compiler)
+	add("kspAndroid", libs.koin.ksp.compiler)
+	add("kspIosX64", libs.koin.ksp.compiler)
+	add("kspIosArm64", libs.koin.ksp.compiler)
+	add("kspIosSimulatorArm64", libs.koin.ksp.compiler)
 }
 
+// Trigger Common Metadata Generation from Native tasks
+project.tasks.withType(KotlinCompilationTask::class.java).configureEach {
+	if(name != "kspCommonMainKotlinMetadata") {
+		dependsOn("kspCommonMainKotlinMetadata")
+	}
+}
