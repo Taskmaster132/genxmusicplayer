@@ -14,13 +14,16 @@ import kotlinx.coroutines.launch
 import org.koin.androidx.scope.ScopeViewModel
 
 class MainActivityViewModel : ScopeViewModel() {
+	private val _player = MutableStateFlow<Player?>(null)
+	val player = _player.asStateFlow()
+
 	private val _songs = MutableStateFlow<List<PlaylistSong>>(emptyList())
 	val songs = _songs.asStateFlow()
 
-	private val _currentPlaylist = MutableStateFlow<List<PlaylistSong>>(emptyList())
+	private val _currentSong = MutableStateFlow<PlaylistSong?>(null)
+	val currentSong = _currentSong.asStateFlow()
 
-	private val _player = MutableStateFlow<Player?>(null)
-	val player = _player.asStateFlow()
+	private val _currentPlaylist = MutableStateFlow<List<PlaylistSong>>(emptyList())
 
 	private var bridge: GenXMusicServiceBridge? = null
 

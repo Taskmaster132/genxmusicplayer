@@ -3,7 +3,6 @@ package au.com.idealogica.genxmusicplayer.service
 import android.content.Intent
 import android.os.Binder
 import android.os.IBinder
-import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
@@ -28,21 +27,30 @@ class GenXMusicService : MediaSessionService() {
 	override fun onCreate() {
 		super.onCreate()
 
-		mediaSession = MediaSession.Builder(this, player).build()
+		val session = MediaSession.Builder(this, player).build()
+		addSession(session)
+		mediaSession = session
 	}
 
 	override fun onBind(intent: Intent?): IBinder {
 		super.onBind(intent)
 
-		GenXMusicPlayerNotificationManager.ensureChannelExists(this)
-//		val notification = NotificationCompat.Builder(this, CHANNEL_ID)
+//		GenXMusicPlayerNotificationManager.ensureChannelExists(this)
+//		val notification = NotificationCompat.Builder(this@GenXMusicService, CHANNEL_ID)
 //			.setStyle(
 //				androidx.media.app.NotificationCompat.MediaStyle()
-//					.setMediaSession(mediaSession?.player?.sessionToken)
-//					.setShowActionsInCompactView(0, 1, 2) // Show play/pause, previous, next
+//					.setMediaSession(MediaSessionCompat.fromMediaSession(this, mediaSession).sessionToken)
+//					.setShowActionsInCompactView(0, 1, 2) // Show play/pause, prev, next
 //			)
+//			.setContentTitle(metadata.title)
+//			.setContentText(metadata.artist)
+//			.setLargeIcon(metadata.artwork)
+//			.addAction(R.drawable.skip_previous, "Previous", prevPendingIntent)
+//			.addAction(R.drawable., "Play", playPendingIntent)
+//			.addAction(R.drawable.skip_next, "Next", nextPendingIntent)
 //			.setSmallIcon(R.drawable.notification_icon)
-//
+//			.build()
+
 //		val playPauseAction = NotificationCompat.Action(
 //			R.drawable.play_pause,
 //			"Play",

@@ -47,13 +47,15 @@ fun MainActivityScreen(
 	viewModel: MainActivityViewModel,
 	padding: PaddingValues
 ) {
-	val songs by viewModel.songs.collectAsStateWithLifecycle()
 	val player by viewModel.player.collectAsStateWithLifecycle()
+	val songs by viewModel.songs.collectAsStateWithLifecycle()
+	val currentSong by viewModel.currentSong.collectAsStateWithLifecycle()
 
-    MainActivityScreenColumn(
+	MainActivityScreenColumn(
 		padding = padding,
 		player = player,
 		songs = songs,
+		currentSong = currentSong,
 		onEvent = viewModel::onEvent
 	)
 }
@@ -64,6 +66,7 @@ private fun MainActivityScreenColumn(
 	padding: PaddingValues,
 	player: Player?,
 	songs: List<PlaylistSong>,
+	currentSong: PlaylistSong?,
 	onEvent: (MainActivityScreenEvents) -> Unit
 ) {
 	Column(
@@ -149,12 +152,13 @@ private fun MainActivityScreenColumn(
 @Composable
 fun MainActivityScreenPreview() {
 	val context = LocalContext.current
-    MaterialTheme {
+	MaterialTheme {
 		Surface {
 			MainActivityScreenColumn(
+				padding = PaddingValues(0.dp),
 				player = ExoPlayer.Builder(context).build(),
 				songs = emptyList(),
-				padding = PaddingValues(0.dp),
+				currentSong = null,
 				onEvent = {}
 			)
 		}
