@@ -7,12 +7,18 @@ import androidx.media3.common.Player
 import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import au.com.idealogica.genxmusicplayer.extensions.toMediaItem
+import au.com.idealogica.genxmusicplayer.model.PlaylistModification
 import au.com.idealogica.genxmusicplayer.model.PlaylistSong
+import au.com.idealogica.genxmusicplayer.model.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.android.ext.android.inject
 import java.io.IOException
@@ -23,6 +29,11 @@ class GenXMusicService : MediaSessionService() {
 	private var mediaSession: MediaSession? = null
 
 	val player: Player by inject()
+
+	private var buildJob: Job? = null
+
+	private val _currentPlaylist = MutableStateFlow<List<PlaylistSong>>(emptyList())
+	val currentPlaylist = _currentPlaylist.asStateFlow()
 
 	override fun onCreate() {
 		super.onCreate()
@@ -35,30 +46,6 @@ class GenXMusicService : MediaSessionService() {
 	override fun onBind(intent: Intent?): IBinder {
 		super.onBind(intent)
 
-//		GenXMusicPlayerNotificationManager.ensureChannelExists(this)
-//		val notification = NotificationCompat.Builder(this@GenXMusicService, CHANNEL_ID)
-//			.setStyle(
-//				androidx.media.app.NotificationCompat.MediaStyle()
-//					.setMediaSession(MediaSessionCompat.fromMediaSession(this, mediaSession).sessionToken)
-//					.setShowActionsInCompactView(0, 1, 2) // Show play/pause, prev, next
-//			)
-//			.setContentTitle(metadata.title)
-//			.setContentText(metadata.artist)
-//			.setLargeIcon(metadata.artwork)
-//			.addAction(R.drawable.skip_previous, "Previous", prevPendingIntent)
-//			.addAction(R.drawable., "Play", playPendingIntent)
-//			.addAction(R.drawable.skip_next, "Next", nextPendingIntent)
-//			.setSmallIcon(R.drawable.notification_icon)
-//			.build()
-
-//		val playPauseAction = NotificationCompat.Action(
-//			R.drawable.play_pause,
-//			"Play",
-//			PendingIntent.getBroadcast(this, PLAY_REQUEST_CODE, Intent(ACTION_PLAY), PendingIntent.FLAG_IMMUTABLE)
-//		)
-
-//		startForeground(NOTIFICATION_ID, notification.build())
-
 		return MusicBinder()
 	}
 
@@ -67,62 +54,95 @@ class GenXMusicService : MediaSessionService() {
 
 	private fun playSong(playlistSong: PlaylistSong) {
 		try {
-			mediaSession?.player?.stop()
-			mediaSession?.player?.clearMediaItems()
-			mediaSession?.player?.addMediaItem(playlistSong.toMediaItem())
+			if (player.isCommandAvailable(Player.COMMAND_STOP)) {
+				player.stop()
+			}
 
-			mediaSession?.player?.prepare()
-			mediaSession?.player?.play()
+			if (player.isCommandAvailable(Player.COMMAND_CHANGE_MEDIA_ITEMS)) {
+				player.clearMediaItems()
+				player.addMediaItem(playlistSong.toMediaItem())
+			}
 
-			mediaSession?.player?.playlistMetadata
-		} catch (e: IOException) {
-			println("Error playing song: $e")
-		}
-	}
+			if (player.isCommandAvailable(Player.COMMAND_PREPARE)) {
+				player.prepare()
+			}
 
-	private fun addToQueue(playList: List<PlaylistSong>) {
-		if (playList.isEmpty()) {
-			return
-		}
-
-		try {
-			playSong(playList.first())
-			for (i in 1 until playList.size) {
-				mediaSession?.player?.addMediaItem(playList[i].toMediaItem())
+			if (player.isCommandAvailable(Player.COMMAND_PLAY_PAUSE)) {
+				player.play()
 			}
 		} catch (e: IOException) {
 			println("Error playing song: $e")
 		}
 	}
 
-	fun pauseSong(): Boolean {
-		return if (mediaSession?.player?.isPlaying == true) {
-			mediaSession?.player?.pause()
-
-			true
-		} else {
-			false
+	private fun modifyPlaylist(playlistModification: PlaylistModification) {
+		serviceScope.launch {
+			when (playlistModification) {
+				PlaylistModification.NoAction -> return@launch
+				is PlaylistModification.AddSongAndPlayNow -> addSongAndPlayNow(playlistModification.song)
+				is PlaylistModification.AddSongAndPlayNext -> insertSongAsNextSongInPlaylist(playlistModification.song)
+				is PlaylistModification.AddSongToPlaylist -> addSongToPlaylist(playlistModification.song)
+			}
 		}
 	}
 
-	fun resumeSong(): Boolean{
-		return if (mediaSession?.player?.isPlaying != true) {
-			mediaSession?.player?.play()
-
-			true
-		} else {
-			false
+	private suspend fun addSongAndPlayNow(song: Song) {
+		if (checkIfPlaylistIsEmpty(song)) {
+			return
 		}
+
+		buildJob?.join()
+
+		val playlistSong = PlaylistSong(song)
+		val index = player.currentMediaItemIndex + 1
+		player.addMediaItem(index, playlistSong.toMediaItem())
+		player.seekToNextMediaItem()
+
+		val currentPlaylist = _currentPlaylist.value.toMutableList()
+		currentPlaylist.add(index, playlistSong)
+		_currentPlaylist.update { currentPlaylist }
 	}
 
-	fun stopSong(): Boolean {
-		return if (mediaSession?.player?.isPlaying == true) {
-			mediaSession?.player?.stop()
-
-			true
-		} else {
-			false
+	private suspend fun insertSongAsNextSongInPlaylist(song: Song) {
+		if (checkIfPlaylistIsEmpty(song)) {
+			return
 		}
+
+		buildJob?.join()
+
+		val playlistSong = PlaylistSong(song)
+		val index = player.currentMediaItemIndex + 1
+		player.addMediaItem(index, playlistSong.toMediaItem())
+
+		val currentPlaylist = _currentPlaylist.value.toMutableList()
+		currentPlaylist.add(index, playlistSong)
+		_currentPlaylist.update { currentPlaylist }
+	}
+
+	private suspend fun addSongToPlaylist(song: Song) {
+		if (checkIfPlaylistIsEmpty(song)) {
+			return
+		}
+
+		buildJob?.join()
+
+		val playlistSong = PlaylistSong(song)
+		player.addMediaItem(playlistSong.toMediaItem())
+
+		val currentPlaylist = _currentPlaylist.value.toMutableList()
+		currentPlaylist.add(playlistSong)
+		_currentPlaylist.update { currentPlaylist }
+	}
+
+	private fun checkIfPlaylistIsEmpty(song: Song): Boolean {
+		if (player.mediaItemCount < 1) {
+			val playlistSong = PlaylistSong(song = song)
+			_currentPlaylist.update { listOf(playlistSong) }
+			playSong(playlistSong)
+			return true
+		}
+
+		return false
 	}
 
 	override fun onTaskRemoved(rootIntent: Intent?) {
@@ -136,10 +156,10 @@ class GenXMusicService : MediaSessionService() {
 		}
 	}
 
-	fun listen(songs: StateFlow<List<PlaylistSong>>) {
+	fun listen(modifications: StateFlow<PlaylistModification>) {
 		serviceScope.launch {
-			songs.collect {
-				addToQueue(it)
+			modifications.collect {
+				modifyPlaylist(it)
 			}
 		}
 	}

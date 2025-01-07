@@ -2,4 +2,6 @@
 <resources>
 	<color name="genx_black">#000000</color>
 	<color name="genx_red">#FF0000</color>
+	<color name="genx_theme_color">#CD19EC</color>
+	<color name="genx_white">#FFFFFF</color>
 </resources>

@@ -17,16 +17,17 @@
 		android:supportsRtl="true"
 		android:theme="@android:style/Theme.Material.Light.NoActionBar">
 		<activity
+			android:theme="@style/Theme.App.Starting"
 			android:exported="true"
-			android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
-			android:name=".ui.mainactivity.MainActivity">
+			android:name=".ui.splashactivity.SplashActivity">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
-
 				<category android:name="android.intent.category.LAUNCHER" />
 			</intent-filter>
 		</activity>
-
+		<activity
+			android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|mnc|colorMode|density|fontScale|fontWeightAdjustment|keyboard|layoutDirection|locale|mcc|navigation|smallestScreenSize|touchscreen|uiMode"
+			android:name=".ui.mainactivity.MainActivity" />
 		<service
 			android:name=".service.GenXMusicService"
 			android:foregroundServiceType="mediaPlayback"
@@ -37,7 +38,6 @@
 				<action android:name="android.media.browse.MediaBrowserService"/>
 			</intent-filter>
 		</service>
-
 	</application>
 
 </manifest>

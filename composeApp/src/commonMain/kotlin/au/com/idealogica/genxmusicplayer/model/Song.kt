@@ -4,15 +4,27 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class Song(
-	val id: Long,
 	val name: String,
 	val path: String,
 	val cdTrackNumber: String,
 	val album: String,
 	val artist: String,
-	val author: String,
-	val composer: String,
-	val genre: String,
-	val year: Int,
 	val duration: Int
-)
+) {
+	val id: Int
+		get() = hashCode()
+
+	fun containsText(text: String): Boolean {
+		return name.contains(text, ignoreCase = true)
+			|| album.contains(text, ignoreCase = true)
+			|| artist.contains(text, ignoreCase = true)
+	}
+
+	override fun hashCode(): Int {
+		return path.hashCode()
+	}
+
+	override fun equals(other: Any?): Boolean {
+		return other is Song && other.path == path
+	}
+}

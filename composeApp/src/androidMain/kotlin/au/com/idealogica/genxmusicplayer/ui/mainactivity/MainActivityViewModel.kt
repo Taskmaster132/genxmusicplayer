@@ -1,61 +1,88 @@
 package au.com.idealogica.genxmusicplayer.ui.mainactivity
 
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
+import au.com.idealogica.genxmusicplayer.model.PlaylistModification
 import au.com.idealogica.genxmusicplayer.model.PlaylistSong
 import au.com.idealogica.genxmusicplayer.model.Song
+import au.com.idealogica.genxmusicplayer.service.GenXDeviceService
 import au.com.idealogica.genxmusicplayer.service.GenXMusicService
-import au.com.idealogica.genxmusicplayer.service.GenXMusicServiceBridge
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.koin.androidx.scope.ScopeViewModel
+import java.util.concurrent.atomic.AtomicBoolean
 
 class MainActivityViewModel : ScopeViewModel() {
+
 	private val _player = MutableStateFlow<Player?>(null)
 	val player = _player.asStateFlow()
 
-	private val _songs = MutableStateFlow<List<PlaylistSong>>(emptyList())
-	val songs = _songs.asStateFlow()
-
-	private val _currentSong = MutableStateFlow<PlaylistSong?>(null)
-	val currentSong = _currentSong.asStateFlow()
+	private val _currentPlaylistName = MutableStateFlow("No playlist is currently selected")
+	val currentPlaylistName = _currentPlaylistName.asStateFlow()
 
 	private val _currentPlaylist = MutableStateFlow<List<PlaylistSong>>(emptyList())
+	val currentPlaylist = _currentPlaylist.asStateFlow()
 
-	private var bridge: GenXMusicServiceBridge? = null
+	private val _currentSongIndex = MutableStateFlow(-1)
+	val currentSongIndex = _currentSongIndex.asStateFlow()
 
-	fun updateSongs(songs: List<Song>) {
-		val songList = songs.mapIndexed { index, song -> PlaylistSong(index, song) }
-		_songs.tryEmit(songList)
+	private val _playlistModification = MutableStateFlow<PlaylistModification>(PlaylistModification.NoAction)
+	private val playlistModification = _playlistModification.asStateFlow()
+
+	private val serviceIsBound = AtomicBoolean(false)
+
+	lateinit var deviceService: GenXDeviceService
+	val allSongsOnDevice: StateFlow<List<Song>> by lazy {
+		deviceService.allSongsOnDevice
 	}
 
-	fun onEvent(event: MainActivityScreenEvents) {
-		when (event) {
-			is MainActivityScreenEvents.SongTapped -> {
-				event.song.index
-				bridge?.playSong(event.song)
+	fun serviceBound(musicService: GenXMusicService) {
+		_player.update { musicService.player }
+		musicService.listen(playlistModification)
+
+		musicService.player.addListener(object : Player.Listener {
+			override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
+				val currentIndex = musicService.player.currentMediaItemIndex
+				_currentSongIndex.update { currentIndex }
+			}
+		})
+
+		viewModelScope.launch(Dispatchers.Default) {
+			musicService.currentPlaylist.collect { newPlaylist ->
+				_currentPlaylist.update { newPlaylist }
 			}
 		}
 	}
 
-	fun playSong(index: Int) {
-		viewModelScope.launch(Dispatchers.Default) {
-			val currentList = _songs.value.subList(index, _songs.value.size)
-			val start = _songs.value.subList(0, index)
-			val newList = currentList + start
-			_currentPlaylist.tryEmit(newList)
+	fun addSongToPlayListAndPlayImmediately(song: Song) {
+		_currentPlaylistName.update { "Ad hoc" }
+		_playlistModification.update { PlaylistModification.AddSongAndPlayNow(song) }
+
+		if (serviceIsBound.compareAndSet(false, true)) {
+			deviceService.bindService()
 		}
 	}
 
-	fun loadPlayer(service: GenXMusicService) {
-		_player.tryEmit(service.player)
-		service.listen(_currentPlaylist.asStateFlow())
+	fun insertSongAsNextSongInPlaylist(song: Song) {
+		_currentPlaylistName.update { "Ad hoc" }
+		_playlistModification.update { PlaylistModification.AddSongAndPlayNext(song) }
+
+		if (serviceIsBound.compareAndSet(false, true)) {
+			deviceService.bindService()
+		}
 	}
 
-	fun setBridge(bridge: GenXMusicServiceBridge) {
-		this.bridge = bridge
+	fun addSongToPlaylist(song: Song) {
+		_currentPlaylistName.update { "Ad hoc" }
+		_playlistModification.update { PlaylistModification.AddSongToPlaylist(song) }
+
+		if (serviceIsBound.compareAndSet(false, true)) {
+			deviceService.bindService()
+		}
 	}
 }

@@ -8,7 +8,6 @@ fun PlaylistSong.toMediaItem(): MediaItem {
 	val metadata = MediaMetadata.Builder()
 		.setTitle(this.song.name)
 		.setArtist(this.song.artist)
-		.setGenre(this.song.genre)
 		.build()
 
 	return MediaItem.Builder()
