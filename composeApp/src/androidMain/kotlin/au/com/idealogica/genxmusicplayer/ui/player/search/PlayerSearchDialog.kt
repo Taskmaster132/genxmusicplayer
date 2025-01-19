@@ -42,24 +42,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import au.com.idealogica.genxmusicplayer.model.PlaylistSong
 import au.com.idealogica.genxmusicplayer.model.PopupMenu
 import au.com.idealogica.genxmusicplayer.model.Song
 import au.com.idealogica.genxmusicplayer.ui.components.ExpandablePlaylistSong
-import au.com.idealogica.genxmusicplayer.ui.mainactivity.MainActivityViewModel
 import au.com.idealogica.genxmusicplayer.ui.player.PlayerViewModel
 import org.koin.androidx.compose.koinViewModel
 
 @Composable
 fun PlayerSearchDialog(
-	mainActivityViewModel: MainActivityViewModel,
 	playerViewModel: PlayerViewModel,
 	padding: PaddingValues,
 	popupMenu: List<PopupMenu>
 ) {
 	val viewModel: PlayerSearchDialogViewModel = koinViewModel()
-
-	viewModel.loadAllSongs(mainActivityViewModel)
 
 	val searchStr by viewModel.searchStr.collectAsStateWithLifecycle()
 	val visibleSongs by viewModel.visibleSongs.collectAsStateWithLifecycle()
@@ -158,7 +153,11 @@ private fun PlayerSearchColumn(
 							.weight(1f),
 						contentAlignment = Alignment.Center
 					) {
-						Text(text = "No songs matched your search query")
+						if (searchStr.isNotEmpty()) {
+							Text(text = "No songs matched your search query")
+						} else {
+							Text(text = "There appears to be no songs on your device")
+						}
 					}
 				} else {
 					LazyColumn(
@@ -173,6 +172,8 @@ private fun PlayerSearchColumn(
 								ExpandablePlaylistSong(
 									song = song,
 									isCurrentlyPlaying = false,
+									isFirst = index == 0,
+									isLast = index == visibleSongs.lastIndex,
 									popupMenu = popupMenu
 								)
 							}

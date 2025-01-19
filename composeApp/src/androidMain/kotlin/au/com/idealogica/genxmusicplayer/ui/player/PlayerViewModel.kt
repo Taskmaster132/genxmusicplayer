@@ -10,13 +10,8 @@ class PlayerViewModel : ScopeViewModel() {
 	private val _showSearchDialog = MutableStateFlow(false)
 	val showSearchDialog = _showSearchDialog.asStateFlow()
 
-	fun handleUserAction(event: PlayerScreenActions) {
-		when (event) {
-			PlayerScreenActions.ClearTapped -> {}
-			PlayerScreenActions.SearchTapped -> _showSearchDialog.update { true }
-			PlayerScreenActions.ShuffleTapped -> {}
-			PlayerScreenActions.SortTapped -> {}
-		}
+	fun searchTapped() {
+		_showSearchDialog.update { true }
 	}
 
 	fun hideSearchDialog() {

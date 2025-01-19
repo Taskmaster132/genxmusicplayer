@@ -8,7 +8,7 @@ import androidx.media3.session.MediaSession
 import androidx.media3.session.MediaSessionService
 import au.com.idealogica.genxmusicplayer.extensions.toMediaItem
 import au.com.idealogica.genxmusicplayer.model.PlaylistModification
-import au.com.idealogica.genxmusicplayer.model.PlaylistSong
+import au.com.idealogica.genxmusicplayer.model.CurrentPlaylistSong
 import au.com.idealogica.genxmusicplayer.model.Song
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,7 +32,7 @@ class GenXMusicService : MediaSessionService() {
 
 	private var buildJob: Job? = null
 
-	private val _currentPlaylist = MutableStateFlow<List<PlaylistSong>>(emptyList())
+	private val _currentPlaylist = MutableStateFlow<List<CurrentPlaylistSong>>(emptyList())
 	val currentPlaylist = _currentPlaylist.asStateFlow()
 
 	override fun onCreate() {
@@ -52,7 +52,7 @@ class GenXMusicService : MediaSessionService() {
 	override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? =
 		mediaSession
 
-	private fun playSong(playlistSong: PlaylistSong) {
+	private fun playSong(playlistSong: CurrentPlaylistSong) {
 		try {
 			if (player.isCommandAvailable(Player.COMMAND_STOP)) {
 				player.stop()
@@ -82,6 +82,9 @@ class GenXMusicService : MediaSessionService() {
 				is PlaylistModification.AddSongAndPlayNow -> addSongAndPlayNow(playlistModification.song)
 				is PlaylistModification.AddSongAndPlayNext -> insertSongAsNextSongInPlaylist(playlistModification.song)
 				is PlaylistModification.AddSongToPlaylist -> addSongToPlaylist(playlistModification.song)
+				PlaylistModification.ClearPlaylist -> stopAndClear()
+				is PlaylistModification.ShuffleModeChanged -> player.shuffleModeEnabled = playlistModification.active
+				is PlaylistModification.PlaySong -> player.seekTo(playlistModification.index, 0)
 			}
 		}
 	}
@@ -93,7 +96,7 @@ class GenXMusicService : MediaSessionService() {
 
 		buildJob?.join()
 
-		val playlistSong = PlaylistSong(song)
+		val playlistSong = CurrentPlaylistSong(song)
 		val index = player.currentMediaItemIndex + 1
 		player.addMediaItem(index, playlistSong.toMediaItem())
 		player.seekToNextMediaItem()
@@ -110,7 +113,7 @@ class GenXMusicService : MediaSessionService() {
 
 		buildJob?.join()
 
-		val playlistSong = PlaylistSong(song)
+		val playlistSong = CurrentPlaylistSong(song)
 		val index = player.currentMediaItemIndex + 1
 		player.addMediaItem(index, playlistSong.toMediaItem())
 
@@ -126,7 +129,7 @@ class GenXMusicService : MediaSessionService() {
 
 		buildJob?.join()
 
-		val playlistSong = PlaylistSong(song)
+		val playlistSong = CurrentPlaylistSong(song)
 		player.addMediaItem(playlistSong.toMediaItem())
 
 		val currentPlaylist = _currentPlaylist.value.toMutableList()
@@ -136,7 +139,7 @@ class GenXMusicService : MediaSessionService() {
 
 	private fun checkIfPlaylistIsEmpty(song: Song): Boolean {
 		if (player.mediaItemCount < 1) {
-			val playlistSong = PlaylistSong(song = song)
+			val playlistSong = CurrentPlaylistSong(song = song)
 			_currentPlaylist.update { listOf(playlistSong) }
 			playSong(playlistSong)
 			return true
@@ -154,6 +157,12 @@ class GenXMusicService : MediaSessionService() {
 			// otherwise.
 			stopSelf()
 		}
+	}
+
+	private fun stopAndClear() {
+		player.stop()
+		player.clearMediaItems()
+		_currentPlaylist.update { emptyList() }
 	}
 
 	fun listen(modifications: StateFlow<PlaylistModification>) {

@@ -1,8 +1,8 @@
 package au.com.idealogica.genxmusicplayer.ui.player
 
 sealed interface PlayerScreenActions {
-	data object ShuffleTapped : PlayerScreenActions
-	data object SearchTapped : PlayerScreenActions
-	data object SortTapped : PlayerScreenActions
-	data object ClearTapped: PlayerScreenActions
+	data class ShuffleTapped(val shuffle: Boolean) : PlayerScreenActions
+	data object AddTapped : PlayerScreenActions
+	data object ClearTapped : PlayerScreenActions
+	data class PlayTapped(val index: Int) : PlayerScreenActions
 }

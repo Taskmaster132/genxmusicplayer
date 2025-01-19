@@ -1,19 +1,17 @@
 package au.com.idealogica.genxmusicplayer
 
 import android.app.Application
-import au.com.idealogica.genxmusicplayer.di.appModule
+import au.com.idealogica.genxmusicplayer.di.initKoin
 import org.koin.android.ext.koin.androidContext
 import org.koin.android.ext.koin.androidLogger
-import org.koin.core.context.startKoin
 
 class GenXMusicPlayerApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
 
-		startKoin {
+		initKoin {
 			androidLogger()
 			androidContext(this@GenXMusicPlayerApplication)
-			modules(appModule)
 		}
 	}
 }

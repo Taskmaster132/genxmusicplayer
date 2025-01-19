@@ -9,11 +9,13 @@ plugins {
 	alias(libs.plugins.composeCompiler)
 	alias(libs.plugins.kotlinSerialization)
 	alias(libs.plugins.ksp)
+	alias(libs.plugins.androidx.room.plugin)
+	alias(libs.plugins.google.services.plugin)
+	alias(libs.plugins.google.crashlytics.plugin)
 }
 
 kotlin {
 	androidTarget {
-		@OptIn(ExperimentalKotlinGradlePluginApi::class)
 		compilerOptions {
 			jvmTarget.set(JvmTarget.JVM_11)
 		}
@@ -30,9 +32,14 @@ kotlin {
 		}
 	}
 
+	room {
+		schemaDirectory("$projectDir/schemas")
+	}
+
 	sourceSets {
 
 		androidMain.dependencies {
+			implementation(project.dependencies.platform(libs.google.firebase.bom))
 			implementation(compose.preview)
 			implementation(libs.androidx.activity.compose)
 			implementation(libs.androidx.compose.material3)
@@ -46,6 +53,8 @@ kotlin {
 			implementation(libs.androidx.media3.ui)
 			implementation(libs.androidx.navigation)
 			implementation(libs.androidx.splashscreen)
+			implementation(libs.google.firebase.analytics)
+			implementation(libs.google.firebase.crashlytics)
 			implementation(libs.koin.android)
 			implementation(libs.koin.compose.viewmodel)
 			implementation(libs.koin.compose.viewmodel.navigation)
@@ -61,10 +70,24 @@ kotlin {
 			implementation(compose.components.uiToolingPreview)
 			implementation(libs.androidx.lifecycle.viewmodel)
 			implementation(libs.androidx.lifecycle.runtime.compose)
+			implementation(libs.androidx.room.runtime)
+			implementation(libs.androidx.sqlite.bundled)
 			implementation(libs.jetbrains.datetime)
 			implementation(libs.jetbrains.serialization.json)
 			api(libs.koin.annotations)
 			implementation(libs.koin.core)
+		}
+
+		dependencies {
+			listOf(
+				"kspAndroid",
+				// "kspJvm",
+				"kspIosSimulatorArm64",
+				"kspIosX64",
+				"kspIosArm64"
+			).forEach {
+				add(it, libs.androidx.room.compiler)
+			}
 		}
 	}
 
@@ -81,8 +104,8 @@ android {
 		applicationId = "au.com.idealogica.genxmusicplayer"
 		minSdk = libs.versions.android.minSdk.get().toInt()
 		targetSdk = libs.versions.android.targetSdk.get().toInt()
-		versionCode = 5
-		versionName = "0.3.0"
+		versionCode = 6
+		versionName = "0.4.0"
 	}
 	packaging {
 		resources {

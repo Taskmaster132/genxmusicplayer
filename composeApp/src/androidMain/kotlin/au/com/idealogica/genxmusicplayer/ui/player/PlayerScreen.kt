@@ -19,13 +19,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Sort
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Shuffle
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -45,7 +45,7 @@ import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.ui.PlayerView
 import au.com.idealogica.genxmusicplayer.R
-import au.com.idealogica.genxmusicplayer.model.PlaylistSong
+import au.com.idealogica.genxmusicplayer.model.CurrentPlaylistSong
 import au.com.idealogica.genxmusicplayer.model.PopupMenu
 import au.com.idealogica.genxmusicplayer.model.Song
 import au.com.idealogica.genxmusicplayer.ui.components.ExpandablePlaylistSong
@@ -64,6 +64,7 @@ fun PlayerScreen(
 	val currentPlaylist by mainActivityViewModel.currentPlaylist.collectAsStateWithLifecycle()
 	val currentSongIndex by mainActivityViewModel.currentSongIndex.collectAsStateWithLifecycle()
 	val currentPlaylistName by mainActivityViewModel.currentPlaylistName.collectAsStateWithLifecycle()
+	val shuffled by mainActivityViewModel.shuffled.collectAsStateWithLifecycle()
 	val showSearchDialog by viewModel.showSearchDialog.collectAsStateWithLifecycle()
 
 	PlayerScreenColumn(
@@ -71,7 +72,15 @@ fun PlayerScreen(
 		songs = currentPlaylist,
 		currentSongIndex = currentSongIndex,
 		currentPlaylistName = currentPlaylistName,
-		onAction = viewModel::handleUserAction
+		shuffled = shuffled,
+		onAction = { action ->
+			when (action) {
+				PlayerScreenActions.ClearTapped -> mainActivityViewModel.clearPlaylist()
+				PlayerScreenActions.AddTapped -> viewModel.searchTapped()
+				is PlayerScreenActions.ShuffleTapped -> mainActivityViewModel.toggleShuffle(action.shuffle)
+				is PlayerScreenActions.PlayTapped -> mainActivityViewModel.playSong(action.index)
+			}
+		}
 	)
 
 	if (showSearchDialog) {
@@ -91,7 +100,6 @@ fun PlayerScreen(
 		)
 
 		PlayerSearchDialog(
-			mainActivityViewModel = mainActivityViewModel,
 			playerViewModel = viewModel,
 			padding = padding,
 			popupMenu = popupMenu
@@ -104,9 +112,10 @@ fun PlayerScreen(
 private fun PlayerScreenColumn(
 	modifier: Modifier = Modifier,
 	player: Player?,
-	songs: List<PlaylistSong>,
+	songs: List<CurrentPlaylistSong>,
 	currentSongIndex: Int,
 	currentPlaylistName: String,
+	shuffled: Boolean,
 	onAction: (PlayerScreenActions) -> Unit
 ) {
 	val colourScheme = MaterialTheme.colorScheme
@@ -170,35 +179,25 @@ private fun PlayerScreenColumn(
 		) {
 			IconButton(
 				onClick = {
-					onAction(PlayerScreenActions.SearchTapped)
+					onAction(PlayerScreenActions.AddTapped)
 				}
 			) {
 				Icon(
-					imageVector = Icons.Default.Search,
-					contentDescription = null
+					imageVector = Icons.Default.Add,
+					contentDescription = "Add songs to playlist"
 				)
 			}
 
 			if (songs.isNotEmpty()) {
-				IconButton(
-					onClick = {
-						onAction(PlayerScreenActions.ShuffleTapped)
+				IconToggleButton(
+					checked = shuffled,
+					onCheckedChange = { checked ->
+						onAction(PlayerScreenActions.ShuffleTapped(checked))
 					}
 				) {
 					Icon(
 						imageVector = Icons.Default.Shuffle,
-						contentDescription = null
-					)
-				}
-
-				IconButton(
-					onClick = {
-						onAction(PlayerScreenActions.SortTapped)
-					}
-				) {
-					Icon(
-						imageVector = Icons.AutoMirrored.Filled.Sort,
-						contentDescription = null
+						contentDescription = "Shuffle"
 					)
 				}
 
@@ -209,7 +208,7 @@ private fun PlayerScreenColumn(
 				) {
 					Icon(
 						imageVector = Icons.Default.Clear,
-						contentDescription = null
+						contentDescription = "Clear"
 					)
 				}
 			}
@@ -223,7 +222,7 @@ private fun PlayerScreenColumn(
 					.weight(1f),
 				contentAlignment = Alignment.Center
 			) {
-				Text(text = "Select songs to play in the 'Playlists' tab")
+				Text(text = "Add songs to play manually or select a playlist from the 'Playlists' tab")
 			}
 		} else {
 			LazyColumn(
@@ -235,11 +234,20 @@ private fun PlayerScreenColumn(
 			) {
 				songs.forEachIndexed { index, playlistSong ->
 					item(key = playlistSong.id) {
+						val popupMenu = listOf(
+							PopupMenu(
+								label = "Play",
+								callback = { _ -> onAction(PlayerScreenActions.PlayTapped(index)) }
+							)
+						)
+
 						ExpandablePlaylistSong(
 							modifier = modifier,
 							song = playlistSong.song,
 							isCurrentlyPlaying = index == currentSongIndex,
-							popupMenu = emptyList()
+							isFirst = index == 0,
+							isLast = index == songs.lastIndex,
+							popupMenu = popupMenu
 						)
 					}
 
@@ -262,9 +270,10 @@ private fun PlayerScreenPreview() {
 		Surface {
 			PlayerScreenColumn(
 				player = null,
-				songs = List(100) { index -> PlaylistSong(Song("Song $index", "", "", "Album $index", "Artist $index", 0)) },
+				songs = List(100) { index -> CurrentPlaylistSong(Song("Song $index", "", "", "Album $index", "Artist $index", 0)) },
 				currentSongIndex = 2,
 				currentPlaylistName = "All songs on device",
+				shuffled = false,
 				onAction = {}
 			)
 		}
@@ -279,9 +288,10 @@ private fun PlayerScreenDarkPreview() {
 		Surface {
 			PlayerScreenColumn(
 				player = null,
-				songs = List(100) { index -> PlaylistSong(Song("Song $index", "", "", "Album $index", "Artist $index", 0)) },
+				songs = List(100) { index -> CurrentPlaylistSong(Song("Song $index", "", "", "Album $index", "Artist $index", 0)) },
 				currentSongIndex = 2,
 				currentPlaylistName = "All songs on device",
+				shuffled = false,
 				onAction = {}
 			)
 		}

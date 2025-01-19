@@ -39,8 +39,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navigation
 import au.com.idealogica.genxmusicplayer.model.Song
+import au.com.idealogica.genxmusicplayer.repository.GenXMusicRepository
 import au.com.idealogica.genxmusicplayer.service.GenXDeviceService
 import au.com.idealogica.genxmusicplayer.service.GenXMusicService
+import au.com.idealogica.genxmusicplayer.service.NativeMusicService
 import au.com.idealogica.genxmusicplayer.ui.navigation.GenXRoutes
 import au.com.idealogica.genxmusicplayer.ui.navigation.TopLevelRoute
 import au.com.idealogica.genxmusicplayer.ui.player.PlayerScreen
@@ -56,8 +58,9 @@ import kotlinx.coroutines.flow.update
 import org.koin.android.ext.android.inject
 import org.koin.compose.viewmodel.koinViewModel
 
-class MainActivity : ComponentActivity(), GenXDeviceService {
+class MainActivity : ComponentActivity(), GenXDeviceService, NativeMusicService {
 
+	private val genxMusicRepository: GenXMusicRepository by inject()
 	private val mainActivityViewModel: MainActivityViewModel by inject()
 	private var musicService: GenXMusicService? = null
 
@@ -89,6 +92,7 @@ class MainActivity : ComponentActivity(), GenXDeviceService {
 		super.onCreate(savedInstanceState)
 
 		mainActivityViewModel.deviceService = this
+		genxMusicRepository.initGenXMusicService(this)
 
 		val topLevelRoutes = listOf(
 			TopLevelRoute("Player", GenXRoutes.Player, Icons.AutoMirrored.Filled.QueueMusic),

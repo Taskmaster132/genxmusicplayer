@@ -2,9 +2,9 @@ package au.com.idealogica.genxmusicplayer.extensions
 
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MediaMetadata
-import au.com.idealogica.genxmusicplayer.model.PlaylistSong
+import au.com.idealogica.genxmusicplayer.model.CurrentPlaylistSong
 
-fun PlaylistSong.toMediaItem(): MediaItem {
+fun CurrentPlaylistSong.toMediaItem(): MediaItem {
 	val metadata = MediaMetadata.Builder()
 		.setTitle(this.song.name)
 		.setArtist(this.song.artist)

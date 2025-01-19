@@ -4,7 +4,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
 import au.com.idealogica.genxmusicplayer.model.PlaylistModification
-import au.com.idealogica.genxmusicplayer.model.PlaylistSong
+import au.com.idealogica.genxmusicplayer.model.CurrentPlaylistSong
 import au.com.idealogica.genxmusicplayer.model.Song
 import au.com.idealogica.genxmusicplayer.service.GenXDeviceService
 import au.com.idealogica.genxmusicplayer.service.GenXMusicService
@@ -25,7 +25,10 @@ class MainActivityViewModel : ScopeViewModel() {
 	private val _currentPlaylistName = MutableStateFlow("No playlist is currently selected")
 	val currentPlaylistName = _currentPlaylistName.asStateFlow()
 
-	private val _currentPlaylist = MutableStateFlow<List<PlaylistSong>>(emptyList())
+	private val _shuffled = MutableStateFlow(false)
+	val shuffled = _shuffled.asStateFlow()
+
+	private val _currentPlaylist = MutableStateFlow<List<CurrentPlaylistSong>>(emptyList())
 	val currentPlaylist = _currentPlaylist.asStateFlow()
 
 	private val _currentSongIndex = MutableStateFlow(-1)
@@ -37,9 +40,6 @@ class MainActivityViewModel : ScopeViewModel() {
 	private val serviceIsBound = AtomicBoolean(false)
 
 	lateinit var deviceService: GenXDeviceService
-	val allSongsOnDevice: StateFlow<List<Song>> by lazy {
-		deviceService.allSongsOnDevice
-	}
 
 	fun serviceBound(musicService: GenXMusicService) {
 		_player.update { musicService.player }
@@ -49,6 +49,10 @@ class MainActivityViewModel : ScopeViewModel() {
 			override fun onMediaItemTransition(mediaItem: MediaItem?, reason: Int) {
 				val currentIndex = musicService.player.currentMediaItemIndex
 				_currentSongIndex.update { currentIndex }
+			}
+
+			override fun onShuffleModeEnabledChanged(shuffleModeEnabled: Boolean) {
+				_shuffled.update { shuffleModeEnabled }
 			}
 		})
 
@@ -84,5 +88,18 @@ class MainActivityViewModel : ScopeViewModel() {
 		if (serviceIsBound.compareAndSet(false, true)) {
 			deviceService.bindService()
 		}
+	}
+
+	fun clearPlaylist() {
+		_currentPlaylistName.update { "" }
+		_playlistModification.update { PlaylistModification.ClearPlaylist }
+	}
+
+	fun toggleShuffle(shuffle: Boolean) {
+		_playlistModification.update { PlaylistModification.ShuffleModeChanged(shuffle) }
+	}
+
+	fun playSong(index: Int) {
+		_playlistModification.update { PlaylistModification.PlaySong(index) }
 	}
 }
