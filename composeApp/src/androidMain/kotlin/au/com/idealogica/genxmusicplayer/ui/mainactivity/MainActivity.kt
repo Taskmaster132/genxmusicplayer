@@ -51,7 +51,6 @@ import au.com.idealogica.genxmusicplayer.ui.playlists.PlaylistsScreen
 import au.com.idealogica.genxmusicplayer.ui.theme.GenXMusicPlayerTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -60,7 +59,7 @@ import org.koin.compose.viewmodel.koinViewModel
 
 class MainActivity : ComponentActivity(), GenXDeviceService, NativeMusicService {
 
-	private val genxMusicRepository: GenXMusicRepository by inject()
+	private val genXMusicRepository: GenXMusicRepository by inject()
 	private val mainActivityViewModel: MainActivityViewModel by inject()
 	private var musicService: GenXMusicService? = null
 
@@ -92,7 +91,7 @@ class MainActivity : ComponentActivity(), GenXDeviceService, NativeMusicService 
 		super.onCreate(savedInstanceState)
 
 		mainActivityViewModel.deviceService = this
-		genxMusicRepository.initGenXMusicService(this)
+		genXMusicRepository.initGenXMusicService(this)
 
 		val topLevelRoutes = listOf(
 			TopLevelRoute("Player", GenXRoutes.Player, Icons.AutoMirrored.Filled.QueueMusic),
