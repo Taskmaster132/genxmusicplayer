@@ -3,20 +3,21 @@ package au.com.idealogica.genxmusicplayer.ui.mainactivity
 import androidx.lifecycle.viewModelScope
 import androidx.media3.common.MediaItem
 import androidx.media3.common.Player
-import au.com.idealogica.genxmusicplayer.model.PlaylistModification
 import au.com.idealogica.genxmusicplayer.model.CurrentPlaylistSong
+import au.com.idealogica.genxmusicplayer.model.PlaylistModification
 import au.com.idealogica.genxmusicplayer.model.Song
 import au.com.idealogica.genxmusicplayer.service.GenXDeviceService
 import au.com.idealogica.genxmusicplayer.service.GenXMusicService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.koin.androidx.scope.ScopeViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
+import org.koin.viewmodel.scope.ScopeViewModel
 import java.util.concurrent.atomic.AtomicBoolean
 
+@OptIn(KoinExperimentalAPI::class)
 class MainActivityViewModel : ScopeViewModel() {
 
 	private val _player = MutableStateFlow<Player?>(null)

@@ -152,6 +152,7 @@ fun ExpandablePlaylistSongPreview() {
 			Column {
 				ExpandablePlaylistSong(
 					song = Song(
+						id = 1,
 						name = "Lady Madonna",
 						path = "",
 						artist = "The Beatles",
@@ -166,6 +167,7 @@ fun ExpandablePlaylistSongPreview() {
 				)
 				ExpandablePlaylistSong(
 					song = Song(
+						id = 2,
 						name = "Let it be",
 						path = "",
 						artist = "The Beatles",
@@ -180,6 +182,7 @@ fun ExpandablePlaylistSongPreview() {
 				)
 				ExpandablePlaylistSong(
 					song = Song(
+						id = 3,
 						name = "Yesterday",
 						path = "",
 						artist = "The Beatles",

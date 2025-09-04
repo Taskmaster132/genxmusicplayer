@@ -1,12 +1,14 @@
 package au.com.idealogica.genxmusicplayer.model
 
-import kotlinx.datetime.Clock
 import kotlinx.serialization.Serializable
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 @Serializable
 data class CurrentPlaylistSong(
 	val song: Song
 ) {
+	@OptIn(ExperimentalTime::class)
 	private val timestamp = Clock.System.now().toEpochMilliseconds()
 	val id: Int = hashCode()
 

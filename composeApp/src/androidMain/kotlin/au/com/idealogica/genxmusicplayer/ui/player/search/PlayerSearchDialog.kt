@@ -208,7 +208,7 @@ private fun PlayerSearchDialogPreview() {
 			PlayerSearchColumn(
 				padding = PaddingValues(0.dp),
 				searchStr = "",
-				visibleSongs = List(100) { index -> Song("Song $index", "", "", "Album $index", "Artist $index", 0) },
+				visibleSongs = List(100) { index -> Song(id = 1, "Song $index", "", "", "Album $index", "Artist $index", 0) },
 				popupMenu = emptyList(),
 				onAction = {}
 			)

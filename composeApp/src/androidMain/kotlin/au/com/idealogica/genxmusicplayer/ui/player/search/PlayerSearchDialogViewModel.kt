@@ -3,8 +3,6 @@ package au.com.idealogica.genxmusicplayer.ui.player.search
 import androidx.lifecycle.viewModelScope
 import au.com.idealogica.genxmusicplayer.model.Song
 import au.com.idealogica.genxmusicplayer.repository.GenXMusicRepository
-import au.com.idealogica.genxmusicplayer.ui.mainactivity.MainActivityViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -12,10 +10,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import org.koin.androidx.scope.ScopeViewModel
+import org.koin.core.annotation.KoinExperimentalAPI
 import org.koin.core.component.inject
+import org.koin.viewmodel.scope.ScopeViewModel
 
+@OptIn(KoinExperimentalAPI::class)
 class PlayerSearchDialogViewModel : ScopeViewModel() {
 
 	private val genXMusicRepository: GenXMusicRepository by inject()

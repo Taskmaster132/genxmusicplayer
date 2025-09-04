@@ -270,7 +270,7 @@ private fun PlayerScreenPreview() {
 		Surface {
 			PlayerScreenColumn(
 				player = null,
-				songs = List(100) { index -> CurrentPlaylistSong(Song("Song $index", "", "", "Album $index", "Artist $index", 0)) },
+				songs = List(100) { index -> CurrentPlaylistSong(Song(id = 1, "Song $index", "", "", "Album $index", "Artist $index", 0)) },
 				currentSongIndex = 2,
 				currentPlaylistName = "All songs on device",
 				shuffled = false,
@@ -288,7 +288,7 @@ private fun PlayerScreenDarkPreview() {
 		Surface {
 			PlayerScreenColumn(
 				player = null,
-				songs = List(100) { index -> CurrentPlaylistSong(Song("Song $index", "", "", "Album $index", "Artist $index", 0)) },
+				songs = List(100) { index -> CurrentPlaylistSong(Song(id = 1, "Song $index", "", "", "Album $index", "Artist $index", 0)) },
 				currentSongIndex = 2,
 				currentPlaylistName = "All songs on device",
 				shuffled = false,

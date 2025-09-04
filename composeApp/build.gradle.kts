@@ -1,4 +1,4 @@
-import org.jetbrains.kotlin.gradle.ExperimentalKotlinGradlePluginApi
+import com.google.devtools.ksp.gradle.KspAATask
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask
 
@@ -77,6 +77,11 @@ kotlin {
 			api(libs.koin.annotations)
 			implementation(libs.koin.core)
 		}
+		commonTest.dependencies {
+			implementation(libs.kotlin.test)
+			implementation(libs.jetbrains.kotlinx.coroutines.test)
+			implementation(libs.app.cash.turbine)
+		}
 
 		dependencies {
 			listOf(
@@ -144,6 +149,12 @@ android {
 	}
 	lint {
 		abortOnError = false
+	}
+}
+
+project.tasks.withType<KspAATask>().configureEach {
+	if (name != "kspCommonMainKotlinMetadata") {
+		dependsOn("kspCommonMainKotlinMetadata")
 	}
 }
 

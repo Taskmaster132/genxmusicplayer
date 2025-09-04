@@ -236,6 +236,7 @@ class MainActivity : ComponentActivity(), GenXDeviceService, NativeMusicService 
 		val songs = mutableListOf<Song>()
 		cursor?.use {
 			while (it.moveToNext()) {
+				val id = it.getLong(it.getColumnIndexOrThrow(MediaStore.Audio.Media._ID))
 				val title = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE))
 				val path = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
 				val cdTrackNumber = it.getString(it.getColumnIndexOrThrow(MediaStore.Audio.Media.CD_TRACK_NUMBER))
@@ -245,6 +246,7 @@ class MainActivity : ComponentActivity(), GenXDeviceService, NativeMusicService 
 
 				songs.add(
 					Song(
+						id = id,
 						name = title,
 						path = path,
 						cdTrackNumber = cdTrackNumber ?: "",
